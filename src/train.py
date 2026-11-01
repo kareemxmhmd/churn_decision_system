@@ -132,8 +132,12 @@ def main() -> None:
     calibrated = calibrate(build_model(y_train)).fit(X_train, y_train)
 
     oof = cross_val_predict(
-    build_model(y_train), X_train, y_train,
-    cv=make_cv(), method="predict_proba", n_jobs=-1
+    calibrate(build_model(y_train)),
+    X_train,
+    y_train,
+    cv=make_cv(),
+    method="predict_proba",
+    n_jobs=-1,
     )[:, 1]
 
     metrics: dict[str, Any] = {
