@@ -73,8 +73,8 @@ def build_preprocessor(scale: bool = True, drop_first: bool = False) -> ColumnTr
 def build_pipeline(model: BaseEstimator, scale: bool = True, drop_first: bool = False) -> Pipeline:
     return Pipeline(
         steps=[
-            ("fe", FeatureEngineer()),
             ("clip", OutlierClipper()),
+            ("fe", FeatureEngineer()),
             ("pre", build_preprocessor(scale=scale, drop_first=drop_first)),
             ("model", model),
         ]
