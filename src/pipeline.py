@@ -4,7 +4,7 @@ from sklearn.impute import SimpleImputer
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
-from preprocessing import FeatureEngineer, OutlierClipper
+from src.preprocessing import FeatureEngineer, OutlierClipper
 
 NUMERIC_COLS: list[str] = [
     "Tenure",
