@@ -1,78 +1,103 @@
 from contextlib import asynccontextmanager
+from pathlib import Path
 from typing import Any, Optional
 
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 from pydantic import BaseModel, ConfigDict, Field
 
 from src.inference import load_inference_artifacts, predict_churn
 
 ml_artifacts: dict[str, Any] = {}
 
+HTML_FILE = Path(__file__).resolve().parents[1] / "HTML" / "index.html"
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-     model, threshold = load_inference_artifacts()
-     ml_artifacts["model"] = model
-     ml_artifacts["threshold"] = threshold
-     yield
-     ml_artifacts.clear()
+    model, threshold = load_inference_artifacts()
+    ml_artifacts["model"] = model
+    ml_artifacts["threshold"] = threshold
+    yield
+    ml_artifacts.clear()
 
 
 app = FastAPI(
-          title="Customer Churn Prediction API",
-          description="Calibrated XGBoost churn prediction service with cost-aware threshold.",
-          version="1.0.0",
-          lifespan=lifespan
+    title="Customer Churn Prediction API",
+    description="Calibrated XGBoost churn prediction service with cost-aware threshold.",
+    version="1.0.0",
+    lifespan=lifespan,
+)
+
+# Enable CORS for frontend clients (e.g., local HTML files or web browsers)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 
 class CustomerFeatures(BaseModel):
-     Tenure: Optional[float] = Field(default=None, ge=0, description="Tenure in months")
-     WarehouseToHome: Optional[float] = Field(default=None, ge=0, description="Distance from warehouse to home")
-     NumberOfDeviceRegistered: int = Field(..., ge=1, description="Number of registered devices")
-     SatisfactionScore: int = Field(..., ge=1, le=5, description="Customer satisfaction score (1-5)")
-     NumberOfAddress: int = Field(..., ge=1, description="Number of addresses on file")
-     DaySinceLastOrder: float = Field(..., ge=0, description="Days since last order")
-     CashbackAmount: float = Field(..., ge=0, description="Cashback amount received")
-     PreferedOrderCat: str = Field(..., description="Preferred order category")
-     MaritalStatus: str = Field(..., description="Marital status (Single, Married, Divorced)")
-     Complain: int = Field(..., ge=0, le=1, description="1 if customer complained in last month, else 0")
+    Tenure: Optional[float] = Field(default=None, ge=0, description="Tenure in months")
+    WarehouseToHome: Optional[float] = Field(default=None, ge=0, description="Distance from warehouse to home")
+    NumberOfDeviceRegistered: int = Field(..., ge=1, description="Number of registered devices")
+    SatisfactionScore: int = Field(..., ge=1, le=5, description="Customer satisfaction score (1-5)")
+    NumberOfAddress: int = Field(..., ge=1, description="Number of addresses on file")
+    DaySinceLastOrder: float = Field(..., ge=0, description="Days since last order")
+    CashbackAmount: float = Field(..., ge=0, description="Cashback amount received")
+    PreferedOrderCat: str = Field(..., description="Preferred order category")
+    MaritalStatus: str = Field(..., description="Marital status (Single, Married, Divorced)")
+    Complain: int = Field(..., ge=0, le=1, description="1 if customer complained in last month, else 0")
 
-     model_config = ConfigDict(
-          json_schema_extra={
-               "example": {
-                    "Tenure": 2.0,
-                    "WarehouseToHome": 15.0,
-                    "NumberOfDeviceRegistered": 4,
-                    "SatisfactionScore": 3,
-                    "NumberOfAddress": 3,
-                    "DaySinceLastOrder": 1.0,
-                    "CashbackAmount": 145.0,
-                    "PreferedOrderCat": "Mobile Phone",
-                    "MaritalStatus": "Single",
-                    "Complain": 1,
-               }
-          }
-     )
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "Tenure": 2.0,
+                "WarehouseToHome": 15.0,
+                "NumberOfDeviceRegistered": 4,
+                "SatisfactionScore": 3,
+                "NumberOfAddress": 3,
+                "DaySinceLastOrder": 1.0,
+                "CashbackAmount": 145.0,
+                "PreferedOrderCat": "Mobile Phone",
+                "MaritalStatus": "Single",
+                "Complain": 1,
+            }
+        }
+    )
 
 
 class PredictionResponse(BaseModel):
-     churn_probability: float
-     churn_prediction: int
-     threshold_used: float
-     recommended_action: str
+    churn_probability: float
+    churn_prediction: int
+    threshold_used: float
+    recommended_action: str
 
 
 @app.get("/health")
 def health_check() -> dict[str, Any]:
-     if "model" not in ml_artifacts:
-          raise HTTPException(status_code=503, detail="Model artifacts are not loaded.")
-     return {
-          "status" : "healthy",
-          "threshold": round(float(ml_artifacts)["threshold"], 4),
-     }
+    if "model" not in ml_artifacts:
+        raise HTTPException(status_code=503, detail="Model artifacts are not loaded.")
+    return {
+        "status": "healthy",
+        "threshold": round(float(ml_artifacts["threshold"]), 4),
+    }
 
-     
+
+@app.get("/", include_in_schema=False)
+@app.get("/ui", include_in_schema=False)
+def serve_ui():
+    if HTML_FILE.exists():
+        return FileResponse(HTML_FILE)
+    return {
+        "message": "HTML UI file not found. Place index.html in the HTML directory.",
+        "expected_path": str(HTML_FILE),
+    }
+
+
 @app.post("/predict", response_model=PredictionResponse)
 def predict_single(customer: CustomerFeatures) -> PredictionResponse:
     try:
@@ -91,6 +116,7 @@ def predict_single(customer: CustomerFeatures) -> PredictionResponse:
         )
     except Exception as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+
 
 @app.post("/predict/batch", response_model=list[PredictionResponse])
 def predict_batch(customers: list[CustomerFeatures]) -> list[PredictionResponse]:
