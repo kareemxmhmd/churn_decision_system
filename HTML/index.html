@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Customer Churn Decision System</title>
+<style>
+  :root { --bg:#0b0f19; --card:#111827; --line:#263148; --text:#f1f5f9; --muted:#94a3b8;
+          --accent:#2563eb; --bad:#f87171; --good:#34d399; --warn:#fbbf24; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font:14px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; background:var(--bg); color:var(--text); }
+  header, nav, main { max-width:1100px; margin:0 auto; padding:0 1.25rem; }
+  header { display:flex; justify-content:space-between; align-items:center; padding-top:1rem; padding-bottom:.75rem; gap:1rem; flex-wrap:wrap; }
+  h1 { font-size:1.1rem; } h2 { font-size:.95rem; margin-bottom:.75rem; }
+  .muted { color:var(--muted); font-size:.8rem; }
+  nav { display:flex; gap:1.5rem; border-bottom:1px solid var(--line); }
+  nav button { background:none; border:0; border-bottom:2px solid transparent; color:var(--muted); padding:.6rem 0; font:inherit; font-weight:600; cursor:pointer; }
+  nav button[aria-selected="true"] { color:var(--text); border-color:var(--accent); }
+  main { padding-top:1.25rem; padding-bottom:3rem; }
+  section[hidden] { display:none; }
+  .grid { display:grid; grid-template-columns:1.1fr .9fr; gap:1.25rem; align-items:start; }
+  @media (max-width:850px) { .grid { grid-template-columns:1fr; } }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:8px; padding:1.1rem; }
+  .fields { display:grid; grid-template-columns:1fr 1fr; gap:.85rem; margin:1rem 0; }
+  label { display:block; font-weight:600; font-size:.8rem; margin-bottom:.25rem; }
+  label small { font-weight:400; color:var(--muted); display:block; }
+  input, select { width:100%; padding:.5rem; background:var(--bg); color:var(--text); border:1px solid var(--line); border-radius:6px; font:inherit; }
+  :focus-visible { outline:2px solid #60a5fa; outline-offset:2px; }
+  button.btn { background:var(--card); color:var(--text); border:1px solid var(--line); border-radius:6px; padding:.45rem .8rem; font:inherit; font-weight:600; cursor:pointer; }
+  button.primary { background:var(--accent); border-color:var(--accent); }
+  button:disabled { opacity:.5; cursor:not-allowed; }
+  .row { display:flex; gap:.5rem; flex-wrap:wrap; align-items:center; }
+  .status { font:600 .75rem ui-monospace,monospace; padding:.25rem .6rem; border:1px solid var(--line); border-radius:4px; }
+  .status.on { color:var(--good); } .status.off { color:var(--bad); }
+  .verdict { font-size:2rem; font-weight:700; } .churn { color:var(--bad); } .stay { color:var(--good); }
+  .bar { position:relative; height:10px; background:var(--bg); border-radius:5px; margin:.75rem 0 .25rem; }
+  .bar i { position:absolute; inset:0 auto 0 0; border-radius:5px; }
+  .bar b { position:absolute; top:-4px; bottom:-4px; width:2px; background:var(--warn); }
+  table { width:100%; border-collapse:collapse; font-size:.8rem; }
+  th, td { text-align:left; padding:.5rem; border-bottom:1px solid var(--line); white-space:nowrap; }
+  .scroll { overflow-x:auto; margin-top:1rem; }
+  .drop { border:1px dashed var(--line); border-radius:8px; padding:1.5rem; text-align:center; cursor:pointer; color:var(--muted); }
+  .drop.over, .drop:hover { border-color:var(--accent); }
+  pre { background:var(--bg); padding:.75rem; border-radius:6px; overflow:auto; font-size:.75rem; margin-top:.5rem; }
+  dialog { margin:auto; background:var(--card); color:var(--text); border:1px solid var(--line); border-radius:8px; padding:1.25rem; width:min(420px,92vw); }
+  dialog::backdrop { background:rgba(0,0,0,.6); }
+  #toast { position:fixed; bottom:1rem; right:1rem; background:var(--card); border:1px solid var(--line); padding:.6rem 1rem; border-radius:6px; opacity:0; transition:opacity .2s; max-width:80vw; }
+  #toast.show { opacity:1; }
+  p + p { margin-top:.6rem; }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>Customer Churn Decision System</h1>
+    <div class="muted">Estimate who is likely to leave and whether a retention offer is worth it.</div>
+  </div>
+  <div class="row">
+    <span id="status" class="status">Connecting…</span>
+    <button class="btn" id="openSettings">Settings</button>
+  </div>
+</header>
+
+<nav role="tablist">
+  <button role="tab" aria-selected="true" data-tab="single">One customer</button>
+  <button role="tab" aria-selected="false" data-tab="batch">Many customers</button>
+  <button role="tab" aria-selected="false" data-tab="about">How it decides</button>
+</nav>
+
+<main>
+<!-- One customer -->
+<section id="single" class="grid">
+  <form id="form" class="card">
+    <h2>Customer details</h2>
+    <div class="row">
+      <span class="muted">Try an example:</span>
+      <button type="button" class="btn" data-preset="high">High risk</button>
+      <button type="button" class="btn" data-preset="borderline">Borderline</button>
+      <button type="button" class="btn" data-preset="low">Low risk</button>
+    </div>
+    <div class="fields">
+      <div><label for="Tenure">Tenure <small>Months as a customer. Leave blank if unknown.</small></label>
+        <input id="Tenure" name="Tenure" type="number" step="0.5" min="0" placeholder="e.g. 12"></div>
+      <div><label for="WarehouseToHome">Distance to warehouse <small>Kilometres. Leave blank if unknown.</small></label>
+        <input id="WarehouseToHome" name="WarehouseToHome" type="number" min="0" placeholder="e.g. 15"></div>
+      <div><label for="MaritalStatus">Marital status</label>
+        <select id="MaritalStatus" name="MaritalStatus"><option>Single</option><option selected>Married</option><option>Divorced</option></select></div>
+      <div><label for="PreferedOrderCat">Favourite order category</label>
+        <select id="PreferedOrderCat" name="PreferedOrderCat"><option>Mobile Phone</option><option>Laptop &amp; Accessory</option><option>Fashion</option><option>Grocery</option><option>Others</option></select></div>
+      <div><label for="NumberOfAddress">Saved addresses</label>
+        <input id="NumberOfAddress" name="NumberOfAddress" type="number" min="1" value="3" required></div>
+      <div><label for="NumberOfDeviceRegistered">Registered devices</label>
+        <input id="NumberOfDeviceRegistered" name="NumberOfDeviceRegistered" type="number" min="1" value="3" required></div>
+      <div><label for="DaySinceLastOrder">Days since last order</label>
+        <input id="DaySinceLastOrder" name="DaySinceLastOrder" type="number" step="0.5" min="0" value="4" required></div>
+      <div><label for="CashbackAmount">Cashback received ($)</label>
+        <input id="CashbackAmount" name="CashbackAmount" type="number" min="0" value="150" required></div>
+      <div><label for="SatisfactionScore">Satisfaction <small>1 = very unhappy, 5 = very happy</small></label>
+        <select id="SatisfactionScore" name="SatisfactionScore"><option>1</option><option>2</option><option selected>3</option><option>4</option><option>5</option></select></div>
+      <div><label for="Complain">Complaint in the last 30 days</label>
+        <select id="Complain" name="Complain"><option value="0">No</option><option value="1">Yes</option></select></div>
+    </div>
+    <div class="row">
+      <button class="btn primary" id="predictBtn" type="submit">Predict churn</button>
+      <button class="btn" type="reset" id="resetBtn">Reset form</button>
+    </div>
+  </form>
+
+  <div class="card" aria-live="polite">
+    <h2>Result</h2>
+    <p id="empty" class="muted">Fill in the details and press “Predict churn”. The result will appear here.</p>
+    <div id="result" hidden>
+      <div id="verdict" class="verdict"></div>
+      <div class="muted" id="probText"></div>
+      <div class="bar"><i id="fill"></i><b id="cutoff"></b></div>
+      <div class="muted" id="cutoffText"></div>
+      <p><strong id="action"></strong></p>
+      <p id="why" class="muted"></p>
+      <details><summary class="muted">Technical details (JSON)</summary><pre id="raw"></pre></details>
+    </div>
+  </div>
+</section>
+
+<!-- Many customers -->
+<section id="batch" hidden>
+  <div class="card">
+    <h2>Score many customers at once</h2>
+    <div class="drop" id="drop" tabindex="0" role="button">Drop a CSV or JSON file here, or click to choose one.<br>
+      <span class="muted">Columns must match the form fields (Tenure, WarehouseToHome, …).</span></div>
+    <input type="file" id="file" accept=".csv,.json" hidden>
+    <div class="row" style="margin-top:1rem">
+      <button class="btn" id="sample">Use sample data</button>
+      <button class="btn primary" id="run" disabled>Score customers</button>
+      <button class="btn" id="export" disabled>Download results (CSV)</button>
+    </div>
+    <p class="muted" id="batchInfo" style="margin-top:.75rem" aria-live="polite">No file loaded yet.</p>
+    <div class="scroll" id="tableWrap" hidden>
+      <table><thead><tr><th>#</th><th>Tenure</th><th>Category</th><th>Marital</th><th>Complaint</th><th>Satisfaction</th><th>Churn chance</th><th>Verdict</th><th>Suggested action</th></tr></thead>
+      <tbody id="rows"></tbody></table>
+    </div>
+  </div>
+</section>
+
+<!-- About -->
+<section id="about" hidden>
+  <div class="card">
+    <h2>How the decision is made</h2>
+    <p>The model estimates each customer’s chance of leaving. If that chance is at or above the cutoff (<strong id="aboutCutoff"></strong>), we recommend a retention offer.</p>
+    <p><strong>Why the cutoff is low:</strong> losing a customer costs about $500, while an unneeded offer costs about $50. Since missing a churner is roughly 10× worse, the cutoff is lowered from 0.50 to favour catching more churners.</p>
+    <p><strong>Model:</strong> outlier clipping, feature engineering, preprocessing, and a calibrated XGBoost classifier. Missing Tenure or distance values are filled with the training medians.</p>
+    <p><strong>Test results:</strong> ROC-AUC 0.9596. Recall 92.52% at the cutoff (99 of 107 churners found). Estimated test-set cost fell from $12,500 to $7,950.</p>
+  </div>
+</section>
+</main>
+
+<dialog id="settings">
+  <form method="dialog">
+    <h2>API settings</h2>
+    <label for="apiUrl">Backend URL <small>Where your FastAPI service is running.</small></label>
+    <input id="apiUrl" type="url" placeholder="http://127.0.0.1:8000">
+    <div class="row" style="margin-top:1rem; justify-content:flex-end">
+      <button class="btn" value="cancel">Cancel</button>
+      <button class="btn primary" id="saveSettings" value="save">Save</button>
+    </div>
+  </form>
+</dialog>
+<div id="toast" role="status"></div>
+
+<script>
+const DEFAULT_API = "http://127.0.0.1:8000";
+const DEFAULT_CUTOFF = 0.1515, LOSS = 500, OFFER = 50;
+const TEXT_FIELDS = ["PreferedOrderCat", "MaritalStatus"];
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+const state = { api: localStorage.getItem("churn_api") || (location.protocol.startsWith("http") ? location.origin : DEFAULT_API),
+                cutoff: DEFAULT_CUTOFF, records: [], results: [] };
+
+// ---------- helpers ----------
+let toastTimer;
+function toast(msg, ms = 3500) {
+  const t = $("toast"); t.textContent = msg; t.classList.add("show");
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove("show"), ms);
+}
+async function api(path, body) {
+  let resp;
+  try {
+    resp = await fetch(state.api + path, body ? { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) } : undefined);
+  } catch {
+    throw new Error(`Can’t reach the server at ${state.api}. Check that it’s running and the URL in Settings is correct.`);
+  }
+  if (!resp.ok) {
+    const err = await resp.json().catch(() => ({}));
+    const d = err.detail;
+    throw new Error(Array.isArray(d) ? d.map(x => `${(x.loc || []).slice(-1)}: ${x.msg}`).join("; ") : d || `Server error (${resp.status})`);
+  }
+  return resp.json();
+}
+async function busy(btn, label, fn) {
+  const old = btn.textContent; btn.disabled = true; btn.textContent = label;
+  try { await fn(); } catch (e) { toast(e.message, 6000); } finally { btn.disabled = false; btn.textContent = old; }
+}
+
+// ---------- tabs ----------
+document.querySelectorAll("nav button").forEach(b => b.onclick = () => {
+  document.querySelectorAll("nav button").forEach(x => x.setAttribute("aria-selected", x === b));
+  ["single", "batch", "about"].forEach(id => $(id).hidden = id !== b.dataset.tab);
+});
+
+// ---------- health + settings ----------
+async function checkHealth() {
+  try {
+    const h = await api("/health");
+    state.cutoff = h.threshold || DEFAULT_CUTOFF;
+    $("status").textContent = `Connected · cutoff ${state.cutoff}`; $("status").className = "status on";
+  } catch {
+    $("status").textContent = "Disconnected"; $("status").className = "status off";
+  }
+  $("aboutCutoff").textContent = state.cutoff.toFixed(4);
+}
+checkHealth(); setInterval(() => { if (!document.hidden) checkHealth(); }, 15000);
+
+$("openSettings").onclick = () => { $("apiUrl").value = state.api; $("settings").showModal(); };
+$("settings").addEventListener("close", () => {
+  if ($("settings").returnValue !== "save") return;
+  state.api = $("apiUrl").value.trim().replace(/\/+$/, "") || DEFAULT_API;
+  localStorage.setItem("churn_api", state.api);
+  toast("Saved. Checking connection…"); checkHealth();
+});
+
+// ---------- single prediction ----------
+const PRESETS = {
+  high:       { Tenure: 1,  WarehouseToHome: 25, NumberOfDeviceRegistered: 5, SatisfactionScore: 1, NumberOfAddress: 5, DaySinceLastOrder: 1,  CashbackAmount: 110, PreferedOrderCat: "Mobile Phone",       MaritalStatus: "Single",   Complain: 1 },
+  borderline: { Tenure: 5,  WarehouseToHome: 14, NumberOfDeviceRegistered: 3, SatisfactionScore: 3, NumberOfAddress: 3, DaySinceLastOrder: 4,  CashbackAmount: 155, PreferedOrderCat: "Fashion",            MaritalStatus: "Divorced", Complain: 0 },
+  low:        { Tenure: 28, WarehouseToHome: 6,  NumberOfDeviceRegistered: 2, SatisfactionScore: 5, NumberOfAddress: 2, DaySinceLastOrder: 12, CashbackAmount: 240, PreferedOrderCat: "Laptop & Accessory", MaritalStatus: "Married",  Complain: 0 },
+};
+document.querySelectorAll("[data-preset]").forEach(b => b.onclick = () => {
+  Object.entries(PRESETS[b.dataset.preset]).forEach(([k, v]) => $(k).value = v);
+  toast("Example loaded. Press “Predict churn” to score it.");
+});
+
+function formPayload() {
+  const p = {};
+  document.querySelectorAll("#form [name]").forEach(el => {
+    const v = el.value.trim();
+    p[el.name] = TEXT_FIELDS.includes(el.name) ? v : v === "" ? null : Number(v);
+  });
+  return p;
+}
+
+$("form").onsubmit = e => {
+  e.preventDefault();
+  const input = formPayload();
+  busy($("predictBtn"), "Predicting…", async () => {
+    const r = await api("/predict", input);
+    const churn = r.churn_prediction === 1, pct = r.churn_probability * 100, cut = r.threshold_used * 100;
+    $("empty").hidden = true; $("result").hidden = false;
+    $("verdict").textContent = churn ? "Likely to churn" : "Likely to stay";
+    $("verdict").className = "verdict " + (churn ? "churn" : "stay");
+    $("probText").textContent = `Estimated churn chance: ${pct.toFixed(1)}%`;
+    $("fill").style.width = Math.min(100, pct) + "%"; $("fill").style.background = churn ? "var(--bad)" : "var(--good)";
+    $("cutoff").style.left = Math.min(100, cut) + "%";
+    $("cutoffText").textContent = `Decision cutoff: ${cut.toFixed(2)}%`;
+    $("action").textContent = r.recommended_action || (churn ? "Send a retention offer" : "No action needed");
+    $("why").textContent = churn
+      ? `The chance is at or above the cutoff. A ~$${OFFER} offer is worth it if it keeps a customer worth up to ~$${LOSS}.`
+      : `The chance is below the cutoff, so an offer would likely be wasted (~$${OFFER}).`;
+    $("raw").textContent = JSON.stringify({ input, prediction: r }, null, 2);
+  });
+};
+
+// ---------- batch ----------
+function parseCsv(text) {
+  const rows = []; let row = [], cell = "", quoted = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (quoted) {
+      if (c === '"') { if (text[i + 1] === '"') { cell += '"'; i++; } else quoted = false; } else cell += c;
+    } else if (c === '"') quoted = true;
+    else if (c === ",") { row.push(cell); cell = ""; }
+    else if (c === "\n" || c === "\r") { if (c === "\r" && text[i + 1] === "\n") i++; row.push(cell); cell = ""; rows.push(row); row = []; }
+    else cell += c;
+  }
+  if (cell || row.length) { row.push(cell); rows.push(row); }
+  const [head, ...body] = rows.filter(r => r.some(x => x.trim()));
+  if (!head) return [];
+  const keys = head.map(h => h.trim());
+  return body.map(r => Object.fromEntries(keys.map((k, i) => {
+    const v = (r[i] ?? "").trim();
+    return [k, v === "" ? null : TEXT_FIELDS.includes(k) || isNaN(Number(v)) ? v : Number(v)];
+  })));
+}
+
+function load(records, source) {
+  state.records = records; state.results = [];
+  $("tableWrap").hidden = true; $("export").disabled = true;
+  $("run").disabled = !records.length;
+  $("batchInfo").textContent = records.length
+    ? `${records.length} customers loaded from ${source}. Press “Score customers” to continue.`
+    : `No customers found in ${source}. Check that the file has a header row and data.`;
+}
+
+function readFile(file) {
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const data = file.name.toLowerCase().endsWith(".json") ? JSON.parse(reader.result) : parseCsv(reader.result);
+      load(Array.isArray(data) ? data : [data], file.name);
+    } catch (e) { toast(`Couldn’t read ${file.name}: ${e.message}`, 6000); }
+  };
+  reader.readAsText(file);
+}
+
+const drop = $("drop");
+drop.onclick = () => $("file").click();
+drop.onkeydown = e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); $("file").click(); } };
+drop.ondragover = e => { e.preventDefault(); drop.classList.add("over"); };
+drop.ondragleave = () => drop.classList.remove("over");
+drop.ondrop = e => { e.preventDefault(); drop.classList.remove("over"); if (e.dataTransfer.files[0]) readFile(e.dataTransfer.files[0]); };
+$("file").onchange = e => { if (e.target.files[0]) readFile(e.target.files[0]); e.target.value = ""; };
+$("sample").onclick = () => load(Object.values(PRESETS).concat([{ ...PRESETS.high, Tenure: null, PreferedOrderCat: "Others" }, { ...PRESETS.low, Tenure: 18, PreferedOrderCat: "Grocery" }]), "sample data");
+
+$("run").onclick = () => busy($("run"), "Scoring…", async () => {
+  const results = await api("/predict/batch", state.records);
+  if (!Array.isArray(results) || results.length !== state.records.length)
+    throw new Error("The server returned a different number of results than customers sent.");
+  state.results = results; renderBatch(); $("export").disabled = false;
+  toast("Scoring finished.");
+});
+
+function renderBatch() {
+  let churners = 0;
+  $("rows").innerHTML = state.records.map((c, i) => {
+    const r = state.results[i], churn = r.churn_prediction === 1;
+    if (churn) churners++;
+    return `<tr><td>${i + 1}</td><td>${c.Tenure != null ? esc(c.Tenure) + " mo" : "N/A"}</td><td>${esc(c.PreferedOrderCat)}</td><td>${esc(c.MaritalStatus)}</td>
+      <td>${c.Complain === 1 ? "Yes" : "No"}</td><td>${esc(c.SatisfactionScore)} / 5</td>
+      <td class="${churn ? "churn" : "stay"}">${(r.churn_probability * 100).toFixed(1)}%</td>
+      <td class="${churn ? "churn" : "stay"}">${churn ? "Likely to churn" : "Likely to stay"}</td><td>${esc(r.recommended_action)}</td></tr>`;
+  }).join("");
+  const n = state.records.length;
+  $("batchInfo").textContent = `${n} scored · ${churners} likely to churn (${(churners / n * 100).toFixed(1)}%) · ${n - churners} likely to stay · Offer budget: $${(churners * OFFER).toLocaleString()}`;
+  $("tableWrap").hidden = false;
+}
+
+$("export").onclick = () => {
+  const extra = ["churn_probability", "churn_prediction", "threshold_used", "recommended_action"];
+  const keys = [...Object.keys(state.records[0]), ...extra];
+  const cell = v => { if (v == null) return ""; const s = String(v); return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; };
+  const lines = state.records.map((c, i) => keys.map(k => cell(k in c ? c[k] : state.results[i][k])).join(","));
+  const blob = new Blob([[keys.join(","), ...lines].join("\n")], { type: "text/csv;charset=utf-8" });
+  const a = Object.assign(document.createElement("a"), { href: URL.createObjectURL(blob), download: `churn_predictions_${new Date().toISOString().slice(0, 10)}.csv` });
+  a.click(); URL.revokeObjectURL(a.href);
+  toast("Results downloaded.");
+};
+</script>
+</body>
+</html>
