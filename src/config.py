@@ -23,3 +23,7 @@ F_BETA = 2.0  # Beta > 1 weights recall higher than precision during threshold t
 # Cost Constants (Business Cost Matrix in USD)
 COST_FALSE_NEGATIVE = 500  # Cost of missed churning customer (lost customer LTV)
 COST_FALSE_POSITIVE = 50   # Cost of unnecessary retention incentive/discount
+
+# MLflow Configuration
+MLFLOW_TRACKING_URI = f"sqlite:///{(ROOT / 'mlflow.db').as_posix()}"
+MLFLOW_EXPERIMENT_NAME = "customer_churn_xgboost"
