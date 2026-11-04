@@ -15,6 +15,9 @@ from sklearn.model_selection import (
 from sklearn.pipeline import Pipeline
 from xgboost import XGBClassifier
 
+import mlflow
+import mlflow.sklearn
+
 from src import config
 from src.pipeline import build_pipeline
 
@@ -169,6 +172,46 @@ def main() -> None:
         json.dumps(metrics, indent=2), encoding="utf-8"
     )
     print(f"\nSaved calibrated model to: {config.MODEL_PATH}")
+
+    mlflow.set_tracking_uri(config.MLFLOW_TRACKING_URI)
+    mlflow.set_experiment(config.MLFLOW_EXPERIMENT_NAME)
+
+    with mlflow.start_run(run_name="xgb_calibrated") as run:
+        xgb_params = uncalibrated.named_steps["model"].get_params()
+        mlflow.log_params(
+            {
+                "n_estimators": xgb_params["n_estimators"],
+                "learning_rate": xgb_params["learning_rate"],
+                "max_depth": xgb_params["max_depth"],
+                "min_child_weight": xgb_params["min_child_weight"],
+                "subsample": xgb_params["subsample"],
+                "colsample_bytree": xgb_params["colsample_bytree"],
+                "scale_pos_weight": round(float(xgb_params["scale_pos_weight"]), 4),
+                "f_beta": config.F_BETA,
+                "cost_fn": config.COST_FALSE_NEGATIVE,
+                "cost_fp": config.COST_FALSE_POSITIVE,
+            }
+        )
+
+        mlflow.log_metrics(
+            {
+                "cv_pr_auc_mean": cv_results["pr_auc_mean"],
+                "cv_roc_auc_mean": cv_results["roc_auc_mean"],
+                "oof_pr_auc": metrics["oof_calibrated"]["pr_auc"],
+                "oof_roc_auc": metrics["oof_calibrated"]["roc_auc"],
+                "oof_brier": metrics["oof_calibrated"]["brier"],
+                "test_pr_auc": metrics["test_calibrated"]["pr_auc"],
+                "test_roc_auc": metrics["test_calibrated"]["roc_auc"],
+                "test_brier": metrics["test_calibrated"]["brier"],
+            }
+        )
+
+        mlflow.sklearn.log_model(calibrated, name="calibrate_model")
+
+        metrics["mlflow_run_id"] = run.info.run_id
+        config.METRICS_PATH.write_text(
+            json.dumps(metrics, indent=2), encoding="utf-8"
+        )
 
 
 if __name__ == "__main__":

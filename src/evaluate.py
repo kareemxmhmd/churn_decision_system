@@ -2,6 +2,8 @@ import json
 from pathlib import Path
 from typing import Any
 
+import mlflow
+
 import joblib
 import matplotlib.pyplot as plt
 import numpy as np
@@ -240,6 +242,26 @@ def main() -> None:
     print(f"Updated metrics saved to: {config.METRICS_PATH}")
     print(f"Threshold artifact saved to: {threshold_path}")
     print(f"Diagnostic plots saved to: {plot_path}")
+
+    mlflow.set_tracking_uri(config.MLFLOW_TRACKING_URI)
+    mlflow.set_experiment(config.MLFLOW_EXPERIMENT_NAME)
+
+    run_id = existing_metrics.get("mlflow_run_id")
+    with mlflow.start_run(run_id=run_id):
+        mlflow.log_metrics(
+            {
+                "optimal_threshold": best_threshold,
+                "oof_f_beta": opt_info["oof_f_beta"],
+                "test_opt_precision": test_eval_opt["precision"],
+                "test_opt_recall": test_eval_opt["recall"],
+                "test_opt_f1": test_eval_opt["f1"],
+                "test_opt_cost_usd": test_eval_opt["business_cost_usd"],
+                "test_default_0_5_cost_usd": test_eval_default["business_cost_usd"],
+            }
+        )
+        mlflow.log_artifact(str(config.METRICS_PATH))
+        mlflow.log_artifact(str(threshold_path))
+        mlflow.log_artifact(str(plot_path))
 
 
 if __name__ == "__main__":
