@@ -1,0 +1,107 @@
+{
+  "retraining_recommended": true,
+  "drifted_features": [
+    "Tenure",
+    "Complain"
+  ],
+  "prediction_drift": {
+    "ks_statistic": 0.2828,
+    "p_value": 0.0,
+    "psi": 0.4274,
+    "ref_positive_rate": 0.2722,
+    "cur_positive_rate": 0.4876,
+    "prediction_drift_detected": true
+  },
+  "feature_drift": [
+    {
+      "feature": "Tenure",
+      "type": "numeric",
+      "test": "ks_2samp",
+      "statistic": 0.373,
+      "p_value": 0.0,
+      "psi": 2.5122,
+      "drift_detected": true
+    },
+    {
+      "feature": "WarehouseToHome",
+      "type": "numeric",
+      "test": "ks_2samp",
+      "statistic": 0.017,
+      "p_value": 1.0,
+      "psi": 0.0065,
+      "drift_detected": false
+    },
+    {
+      "feature": "NumberOfDeviceRegistered",
+      "type": "numeric",
+      "test": "ks_2samp",
+      "statistic": 0.0135,
+      "p_value": 1.0,
+      "psi": 0.0014,
+      "drift_detected": false
+    },
+    {
+      "feature": "SatisfactionScore",
+      "type": "numeric",
+      "test": "ks_2samp",
+      "statistic": 0.0141,
+      "p_value": 1.0,
+      "psi": 0.0006,
+      "drift_detected": false
+    },
+    {
+      "feature": "NumberOfAddress",
+      "type": "numeric",
+      "test": "ks_2samp",
+      "statistic": 0.0204,
+      "p_value": 0.9995,
+      "psi": 0.0042,
+      "drift_detected": false
+    },
+    {
+      "feature": "DaySinceLastOrder",
+      "type": "numeric",
+      "test": "ks_2samp",
+      "statistic": 0.009,
+      "p_value": 1.0,
+      "psi": 0.0032,
+      "drift_detected": false
+    },
+    {
+      "feature": "CashbackAmount",
+      "type": "numeric",
+      "test": "ks_2samp",
+      "statistic": 0.0108,
+      "p_value": 1.0,
+      "psi": 0.003,
+      "drift_detected": false
+    },
+    {
+      "feature": "PreferedOrderCat",
+      "type": "categorical",
+      "test": "chi2",
+      "statistic": 0.2767,
+      "p_value": 0.9981,
+      "psi": NaN,
+      "drift_detected": false
+    },
+    {
+      "feature": "MaritalStatus",
+      "type": "categorical",
+      "test": "chi2",
+      "statistic": 0.0139,
+      "p_value": 0.9931,
+      "psi": NaN,
+      "drift_detected": false
+    },
+    {
+      "feature": "Complain",
+      "type": "categorical",
+      "test": "chi2",
+      "statistic": 68.3874,
+      "p_value": 0.0,
+      "psi": NaN,
+      "drift_detected": true
+    }
+  ]
+}

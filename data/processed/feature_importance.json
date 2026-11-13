@@ -1,0 +1,186 @@
+{
+  "xgboost_engineered_importance": [
+    {
+      "feature": "tenure_band_0-3 mo",
+      "importance_mean": 0.28415942192077637,
+      "importance_std": 0.030835099518299103
+    },
+    {
+      "feature": "tenure_band_25+ mo",
+      "importance_mean": 0.08220815658569336,
+      "importance_std": 0.02993307262659073
+    },
+    {
+      "feature": "Tenure",
+      "importance_mean": 0.07413936406373978,
+      "importance_std": 0.004328002221882343
+    },
+    {
+      "feature": "complain_x_low_tenure",
+      "importance_mean": 0.05465833097696304,
+      "importance_std": 0.007707666605710983
+    },
+    {
+      "feature": "tenure_band_Missing",
+      "importance_mean": 0.048559434711933136,
+      "importance_std": 0.021739007905125618
+    },
+    {
+      "feature": "tenure_isna",
+      "importance_mean": 0.04659026116132736,
+      "importance_std": 0.037972498685121536
+    },
+    {
+      "feature": "complain_x_single",
+      "importance_mean": 0.04511711001396179,
+      "importance_std": 0.005361855495721102
+    },
+    {
+      "feature": "Complain",
+      "importance_mean": 0.03836880996823311,
+      "importance_std": 0.004437541589140892
+    },
+    {
+      "feature": "PreferedOrderCat_Laptop & Accessory",
+      "importance_mean": 0.026734713464975357,
+      "importance_std": 0.004135831259191036
+    },
+    {
+      "feature": "PreferedOrderCat_Mobile Phone",
+      "importance_mean": 0.02538146637380123,
+      "importance_std": 0.0024998681619763374
+    },
+    {
+      "feature": "PreferedOrderCat_Fashion",
+      "importance_mean": 0.02476348541676998,
+      "importance_std": 0.0018848513718694448
+    },
+    {
+      "feature": "CashbackAmount",
+      "importance_mean": 0.02134058065712452,
+      "importance_std": 0.0005904549034312367
+    },
+    {
+      "feature": "SatisfactionScore",
+      "importance_mean": 0.02079630456864834,
+      "importance_std": 0.0013241542037576437
+    },
+    {
+      "feature": "NumberOfAddress",
+      "importance_mean": 0.020743845030665398,
+      "importance_std": 0.0014942942652851343
+    },
+    {
+      "feature": "MaritalStatus_Single",
+      "importance_mean": 0.019649144262075424,
+      "importance_std": 0.001093449187465012
+    },
+    {
+      "feature": "DaySinceLastOrder",
+      "importance_mean": 0.019231608137488365,
+      "importance_std": 0.0013216242659837008
+    },
+    {
+      "feature": "tenure_band_7-12 mo",
+      "importance_mean": 0.018604103475809097,
+      "importance_std": 0.002792291808873415
+    },
+    {
+      "feature": "tenure_band_4-6 mo",
+      "importance_mean": 0.01853969693183899,
+      "importance_std": 0.002123760525137186
+    },
+    {
+      "feature": "PreferedOrderCat_Others",
+      "importance_mean": 0.016841411590576172,
+      "importance_std": 0.0033736019395291805
+    },
+    {
+      "feature": "NumberOfDeviceRegistered",
+      "importance_mean": 0.015159087255597115,
+      "importance_std": 0.0011813868768513203
+    },
+    {
+      "feature": "tenure_band_13-24 mo",
+      "importance_mean": 0.015135852620005608,
+      "importance_std": 0.0042037395760416985
+    },
+    {
+      "feature": "MaritalStatus_Married",
+      "importance_mean": 0.014720531180500984,
+      "importance_std": 0.003160338383167982
+    },
+    {
+      "feature": "WarehouseToHome",
+      "importance_mean": 0.014540615491569042,
+      "importance_std": 0.0012088847579434514
+    },
+    {
+      "feature": "PreferedOrderCat_Grocery",
+      "importance_mean": 0.012563668191432953,
+      "importance_std": 0.002307057147845626
+    },
+    {
+      "feature": "warehouse_to_home_isna",
+      "importance_mean": 0.010901404544711113,
+      "importance_std": 0.003041229210793972
+    },
+    {
+      "feature": "MaritalStatus_Divorced",
+      "importance_mean": 0.010551594197750092,
+      "importance_std": 0.0019382780883461237
+    }
+  ],
+  "permutation_raw_importance": [
+    {
+      "feature": "Tenure",
+      "pr_auc_drop_mean": 0.45306148388009815,
+      "pr_auc_drop_std": 0.03554176170503639
+    },
+    {
+      "feature": "Complain",
+      "pr_auc_drop_mean": 0.14743648768678114,
+      "pr_auc_drop_std": 0.015365551009690732
+    },
+    {
+      "feature": "NumberOfAddress",
+      "pr_auc_drop_mean": 0.10445496756296731,
+      "pr_auc_drop_std": 0.02535250640997521
+    },
+    {
+      "feature": "SatisfactionScore",
+      "pr_auc_drop_mean": 0.05596694070284908,
+      "pr_auc_drop_std": 0.014485930735774631
+    },
+    {
+      "feature": "DaySinceLastOrder",
+      "pr_auc_drop_mean": 0.052677561224143535,
+      "pr_auc_drop_std": 0.01434127303487614
+    },
+    {
+      "feature": "CashbackAmount",
+      "pr_auc_drop_mean": 0.044797338133710285,
+      "pr_auc_drop_std": 0.011208075029866744
+    },
+    {
+      "feature": "NumberOfDeviceRegistered",
+      "pr_auc_drop_mean": 0.044750393115388955,
+      "pr_auc_drop_std": 0.009861425672650186
+    },
+    {
+      "feature": "MaritalStatus",
+      "pr_auc_drop_mean": 0.02797807897432989,
+      "pr_auc_drop_std": 0.018685062373328946
+    },
+    {
+      "feature": "WarehouseToHome",
+      "pr_auc_drop_mean": 0.02698153987890567,
+      "pr_auc_drop_std": 0.012298423514518398
+    },
+    {
+      "feature": "PreferedOrderCat",
+      "pr_auc_drop_mean": 0.014335431921829612,
+      "pr_auc_drop_std": 0.013799754562582736
+    }
+  ]
+}

@@ -1,0 +1,91 @@
+{
+  "model": "xgboost",
+  "cv": {
+    "pr_auc_mean": 0.7599768803059592,
+    "pr_auc_std": 0.0545053655945338,
+    "roc_auc_mean": 0.926595167536456,
+    "roc_auc_std": 0.014102087398299306
+  },
+  "oof_calibrated": {
+    "pr_auc": 0.7489606665882618,
+    "roc_auc": 0.9223721331802722,
+    "brier": 0.07270362451945957
+  },
+  "test_uncalibrated": {
+    "pr_auc": 0.8122460444538191,
+    "roc_auc": 0.9592851406994823,
+    "brier": 0.08447867601503813,
+    "baseline_pr_auc": 0.1636085626911315
+  },
+  "test_calibrated": {
+    "pr_auc": 0.8076294313520097,
+    "roc_auc": 0.959609766098857,
+    "brier": 0.058798365348654,
+    "baseline_pr_auc": 0.1636085626911315
+  },
+  "mlflow_run_id": "e1bae43e2bd245d489c03c06a96676e7",
+  "threshold_tuning": {
+    "threshold": 0.1515150293707847,
+    "beta": 2.0,
+    "oof_f_beta": 0.7708420611646417,
+    "oof_precision": 0.5419734904270986,
+    "oof_recall": 0.8618266978922716
+  },
+  "oof_at_optimal_threshold": {
+    "threshold": 0.1515150293707847,
+    "pr_auc": 0.7489606665882618,
+    "roc_auc": 0.9223721331802722,
+    "brier": 0.07270362451945957,
+    "baseline_pr_auc": 0.1632262996941896,
+    "precision": 0.5419734904270986,
+    "recall": 0.8618266978922716,
+    "f1": 0.6654611211573237,
+    "specificity": 0.8579259936043856,
+    "predicted_positive_rate": 0.2595565749235474,
+    "business_cost_usd": 45050,
+    "confusion_matrix": {
+      "tn": 1878,
+      "fp": 311,
+      "fn": 59,
+      "tp": 368
+    }
+  },
+  "test_at_default_0_5": {
+    "threshold": 0.5,
+    "pr_auc": 0.8076294313520097,
+    "roc_auc": 0.959609766098857,
+    "brier": 0.058798365348654,
+    "baseline_pr_auc": 0.1636085626911315,
+    "precision": 0.7391304347826086,
+    "recall": 0.794392523364486,
+    "f1": 0.7657657657657657,
+    "specificity": 0.9451553930530164,
+    "predicted_positive_rate": 0.17584097859327216,
+    "business_cost_usd": 12500,
+    "confusion_matrix": {
+      "tn": 517,
+      "fp": 30,
+      "fn": 22,
+      "tp": 85
+    }
+  },
+  "test_at_optimal_threshold": {
+    "threshold": 0.1515150293707847,
+    "pr_auc": 0.8076294313520097,
+    "roc_auc": 0.959609766098857,
+    "brier": 0.058798365348654,
+    "baseline_pr_auc": 0.1636085626911315,
+    "precision": 0.5561797752808989,
+    "recall": 0.9252336448598131,
+    "f1": 0.6947368421052632,
+    "specificity": 0.8555758683729433,
+    "predicted_positive_rate": 0.27217125382262997,
+    "business_cost_usd": 7950,
+    "confusion_matrix": {
+      "tn": 468,
+      "fp": 79,
+      "fn": 8,
+      "tp": 99
+    }
+  }
+}
