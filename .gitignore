@@ -5,9 +5,6 @@ __pycache__/
 .ruff_cache/
 *.py[cod]
 
-# data processing
-data/processed/
-
 # MLflow
 mlruns/
 mlartifacts/
